@@ -4,9 +4,8 @@ UNIT_SYSTEM = "imperial"  # or "metric"
 
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 from datetime import datetime, timedelta
+from PIL import Image, ImageDraw, ImageFont
 
 def convert_to_12hr_format(time_str):
     # Assuming the time_str is in 'HH:MM' format
@@ -17,25 +16,20 @@ def celsius_to_fahrenheit(celsius_temp):
     return (celsius_temp * 9/5) + 32
 
 def create_sun_path_image(zmanim, weather, filename):
-    # Create the plot
-    fig, ax = plt.subplots()
+    width, height = 600, 200  # Set desired size
+    image = Image.new('RGB', (width, height), 'white')
+    draw = ImageDraw.Draw(image)
+
+    # Draw arc for sun path
+    draw.arc([50, 50, 550, 150], start=0, end=180, fill='orange', width=2)
+
+    # Add zmanim and weather icons (you'll need to have icon images)
+    # This is a simplified example - adjust as per your needs
     for zman in zmanim:
-        ax.plot(zmanim[zman], 0, 'ro')  # Plot zmanim times
-        ax.text(zmanim[zman], 0.1, zman, rotation=45)
+        draw.text((100, 160), zman, fill='black')  # Position text below the arc
 
-    # Add weather data (optional, based on your data)
-    # for forecast in weather:
-    #     ax.plot(forecast['time'], forecast['temperature'], 'bo')
-    #     ax.text(forecast['time'], forecast['temperature'] + 0.1, forecast['forecast'], rotation=45)
-
-    # Format the plot
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M'))
-    plt.xticks(rotation=45)
-    plt.tight_layout()
-
-    # Save the plot as an image
-    plt.savefig(filename)
-    plt.close()
+    # Save the image
+    image.save(filename)
 
 def create_pdf(sun_path_img, filename):
     c = canvas.Canvas(filename, pagesize=letter)
@@ -70,8 +64,8 @@ def create_pdf(sun_path_img, filename):
         if y < 50:  # Check to avoid writing off the page
             break
 
-    # Add the sun path image at the bottom of the PDF
-    c.drawImage(sun_path_img, 50, 50, width=500, height=100)  # Adjust size and position as needed
+    # Add the sun path image
+    c.drawImage(sun_path_img, 50, 50, width=500, height=100)  # Adjust as needed
 
     c.save()
 
@@ -89,7 +83,6 @@ weather = [
     {"day": "Saturday", "time": "19:00", "forecast": "Clear", "temperature": 15},
     # ... more data for Saturday evening
 ]
-
 
 sun_path_filename = "sun_path.png"
 create_sun_path_image(zmanim, weather, sun_path_filename)
